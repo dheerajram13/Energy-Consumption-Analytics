@@ -1,0 +1,89 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "energy-analytics"
+version = "0.1.0"
+description = "Energy Consumption Analytics Platform"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
+dependencies = [
+    "fastapi>=0.68.0",
+    "uvicorn>=0.15.0",
+    "python-dotenv>=0.19.0",
+    "sqlalchemy>=1.4.23",
+    "psycopg2-binary>=2.9.1",
+    "alembic>=1.7.3",
+    "pandas>=1.3.5,<2.0.0",
+    "numpy>=1.21.2,<2.0.0",
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]>=1.7.4",
+    "python-multipart>=0.0.5",
+    "darts[torch]>=0.25.0,<0.26.0",
+    "scikit-learn>=1.0.1,<2.0.0",
+    "cmdstanpy>=1.0.4,<2.0.0",
+    "pmdarima==1.8.5",
+    "prophet>=1.1.0",
+    "statsmodels>=0.13.0,<0.14.0",
+    "joblib>=1.1.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.2.5",
+    "pytest-cov>=2.12.1",
+    "black>=21.12b0",
+    "flake8>=4.0.1",
+    "mypy>=0.931",
+    "pre-commit>=2.17.0",
+]
+
+[tool.black]
+line-length = 88
+target-version = ["py39"]
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+
+[project.urls]
+Homepage = "https://github.com/yourusername/Energy-Consumption-Analytics"
+Documentation = "https://github.com/yourusername/Energy-Consumption-Analytics#readme"
+Source = "https://github.com/yourusername/Energy-Consumption-Analytics"
+Tracker = "https://github.com/yourusername/Energy-Consumption-Analytics/issues"

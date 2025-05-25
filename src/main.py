@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends, Query, Body, Path, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordRequestForm
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
@@ -7,8 +8,20 @@ from pydantic import BaseModel, Field
 import pandas as pd
 
 # Import models and database
-from .models.energy_models import EnergyConsumption, PowerPlant, Anomaly
+from .models.energy_models import EnergyConsumption, PowerPlant, Anomaly, User
 from .config.database import get_db_session, init_db
+from .auth.auth_utils import (
+    get_password_hash,
+    get_current_active_user,
+    get_current_active_admin,
+    authenticate_user,
+    create_access_token,
+    ACCESS_TOKEN_EXPIRE_MINUTES
+)
+
+# Import routers
+from .api.routes import auth as auth_routes
+from .api.routes import ml as ml_routes
 
 # Pydantic models for request/response
 class EnergyConsumptionCreate(BaseModel):
@@ -38,8 +51,15 @@ init_db()
 app = FastAPI(
     title="Energy Analytics Platform API",
     description="API for Energy Consumption Analytics Platform",
-    version="0.1.0"
+    version="0.1.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json"
 )
+
+# Include routers
+app.include_router(auth_routes.router, prefix="/api")
+app.include_router(ml_routes.router, prefix="/api")
 
 # CORS middleware
 app.add_middleware(
@@ -48,15 +68,16 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Content-Disposition"]
 )
 
 # API Endpoints
-@app.get("/")
-def read_root():
+@app.get("/api/")
+async def read_root():
     return {"message": "Welcome to Energy Analytics Platform API"}
 
-@app.get("/health")
-def health_check():
+@app.get("/api/health")
+async def health_check():
     return {"status": "healthy"}
 
 # Helper function to get consumption record by ID
@@ -183,47 +204,35 @@ async def get_consumption_summary(
     Get summary statistics for energy consumption
     """
     try:
-        # Base query
-        query = db.query(EnergyConsumption).filter(
+        query = db.query(
+            EnergyConsumption.region,
+            db.func.count(EnergyConsumption.id).label("count"),
+            db.func.sum(EnergyConsumption.consumption_mwh).label("total_consumption"),
+            db.func.avg(EnergyConsumption.consumption_mwh).label("avg_consumption"),
+            db.func.min(EnergyConsumption.consumption_mwh).label("min_consumption"),
+            db.func.max(EnergyConsumption.consumption_mwh).label("max_consumption"),
+            db.func.avg(EnergyConsumption.temperature).label("avg_temperature")
+        ).filter(
             EnergyConsumption.timestamp >= start_date,
             EnergyConsumption.timestamp <= end_date
         )
         
-        # Add region filter if provided
         if region:
             query = query.filter(EnergyConsumption.region == region)
+            
+        results = query.group_by(EnergyConsumption.region).all()
         
-        # Get all records
-        records = query.all()
-        
-        if not records:
-            return {
-                "total_consumption_mwh": 0,
-                "avg_daily_consumption_mwh": 0,
-                "max_consumption_mwh": 0,
-                "min_consumption_mwh": 0,
-                "data_points": 0
-            }
-        
-        # Calculate statistics
-        df = pd.DataFrame([{
-            'timestamp': r.timestamp,
-            'consumption_mwh': r.consumption_mwh,
-            'region': r.region,
-            'temperature': r.temperature,
-            'is_holiday': r.is_holiday
-        } for r in records])
-        
-        # Calculate date range for daily average
-        days = (end_date - start_date).days or 1
-        
-        return {
-            "total_consumption_mwh": df['consumption_mwh'].sum(),
-            "avg_daily_consumption_mwh": df['consumption_mwh'].sum() / days,
-            "max_consumption_mwh": df['consumption_mwh'].max(),
-            "min_consumption_mwh": df['consumption_mwh'].min(),
-            "data_points": len(df)
-        }
+        return [
+            {
+                "region": r.region,
+                "count": r.count,
+                "total_consumption": float(r.total_consumption) if r.total_consumption else 0,
+                "avg_consumption": float(r.avg_consumption) if r.avg_consumption else 0,
+                "min_consumption": float(r.min_consumption) if r.min_consumption else 0,
+                "max_consumption": float(r.max_consumption) if r.max_consumption else 0,
+                "avg_temperature": float(r.avg_temperature) if r.avg_temperature else None
+            } for r in results
+        ]
         
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))

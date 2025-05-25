@@ -1,0 +1,76 @@
+version: 2
+updates:
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    # Look for `.github/workflows` in the `main` branch
+    directory: "/"
+    # Check for updates to GitHub Actions every week
+    schedule:
+      interval: "weekly"
+    # Assign PRs to the @dependabot user
+    assignees:
+      - "dependabot"
+    # Add a label to all dependency PRs
+    labels:
+      - "dependencies"
+      - "github-actions"
+
+  # Enable version updates for pip
+  - package-ecosystem: "pip"
+    # Look for `requirements.txt` and `pyproject.toml` in the `main` branch
+    directory: "/"
+    # Check for updates to pip dependencies every week
+    schedule:
+      interval: "weekly"
+    # Assign PRs to the @dependabot user
+    assignees:
+      - "dependabot"
+    # Add a label to all dependency PRs
+    labels:
+      - "dependencies"
+      - "python"
+    # Only allow updates to the dependency files
+    # specified in `match`
+    ignore:
+      # Ignore updates to packages with breaking changes
+      - dependency-name: "darts[torch]"
+        # Ignore major version updates
+        versions: [">= 1.0.0"]
+      - dependency-name: "fastapi"
+        versions: [">= 1.0.0"]
+      - dependency-name: "sqlalchemy"
+        versions: [">= 2.0.0"]
+    # Allow only patch and minor updates for pre-release versions
+    versioning-strategy: "increase"
+
+  # Enable version updates for Docker
+  - package-ecosystem: "docker"
+    # Look for `Dockerfile` in the `main` branch
+    directory: "/"
+    # Check for updates to Docker dependencies every week
+    schedule:
+      interval: "weekly"
+    # Assign PRs to the @dependabot user
+    assignees:
+      - "dependabot"
+    # Add a label to all dependency PRs
+    labels:
+      - "dependencies"
+      - "docker"
+    # Only allow updates to the dependency files
+    # specified in `match`
+    ignore:
+      # Ignore updates to the Python base image
+      - dependency-name: "python"
+        versions: [">= 3.10"]
+      - dependency-name: "postgres"
+        versions: [">= 14"]
+
+# Configuration for dependabot security updates
+# See: https://docs.github.com/en/code-security/dependabot/dependabot-security-updates/configuring-dependabot-security-updates
+# This is enabled by default for all repositories that have Dependabot enabled
+# and have a dependency graph enabled.
+#
+# Uncomment the following to disable security updates
+# security-updates:
+#   enabled: false
