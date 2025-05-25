@@ -25,7 +25,7 @@ scikit-learn>=1.0.1,<2.0.0
 cmdstanpy>=1.0.4,<2.0.0
 pmdarima==1.8.5
 prophet>=1.1.0
-statsmodels>=0.13.0,<0.14.0
+statsmodels>=0.13.0,<0.15.0
 
 # Workflow
 apache-airflow==2.2.0
