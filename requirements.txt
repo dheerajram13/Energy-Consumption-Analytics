@@ -20,7 +20,7 @@ python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 
 # Machine Learning
-darts[torch]>=0.25.0,<0.26.0
+darts[torch]>=0.25.0,<0.36.0
 scikit-learn>=1.0.1,<2.0.0
 cmdstanpy>=1.0.4,<2.0.0
 pmdarima==1.8.5
