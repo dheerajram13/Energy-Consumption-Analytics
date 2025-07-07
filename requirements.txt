@@ -21,7 +21,7 @@ passlib[bcrypt]==1.7.4
 
 # Machine Learning
 # Using specific versions to avoid conflicts
-darts[torch]==0.25.0
+darts[torch]==0.36.0
 scikit-learn==1.0.2
 cmdstanpy==1.0.4
 pmdarima==2.0.4  # Updated to a newer version that works with statsmodels>=0.14.0
