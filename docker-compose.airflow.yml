@@ -1,0 +1,131 @@
+version: '3.8'
+
+x-airflow-common: &airflow-common
+  build:
+    context: .
+    dockerfile: Dockerfile.airflow
+  env_file:
+    - .env.airflow
+  environment:
+    &airflow-common-env
+    # Airflow Core
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@postgres:5432/${POSTGRES_DB:-airflow}
+    AIRFLOW__CORE__FERNET_KEY: ''
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    AIRFLOW__CORE__LOAD_DEFAULT_CONNECTIONS: 'false'
+    
+    # Airflow API
+    AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'
+    
+    # Airflow Webserver
+    AIRFLOW__WEBSERVER__EXPOSE_CONFIG: 'true'
+    AIRFLOW__WEBSERVER__DEFAULT_UI_TIMEZONE: 'UTC'
+    
+    # Database
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@postgres:5432/${POSTGRES_DB:-airflow}
+    
+    # Additional packages
+    _PIP_ADDITIONAL_PACKAGES: 'apache-airflow-providers-postgres apache-airflow-providers-slack netcat-openbsd'
+    
+    # Python path
+    PYTHONPATH: '/opt/airflow/dags:/opt/airflow/energy_analytics'
+  volumes:
+    - .:/opt/airflow/energy_analytics
+    - ./dags:/opt/airflow/dags
+    - ./logs:/opt/airflow/logs
+    - ./plugins:/opt/airflow/plugins
+    - ./data:/opt/airflow/data
+  user: "${AIRFLOW_UID:-50000}:0"
+  depends_on:
+    - postgres
+
+services:
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-airflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-airflow}
+      POSTGRES_DB: ${POSTGRES_DB:-airflow}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-airflow} -d ${POSTGRES_DB:-airflow}"]
+      interval: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  airflow-webserver:
+    <<: *airflow-common
+    entrypoint: ['/bin/bash', '-c']
+    command: >
+      "
+      echo 'Waiting for database to be ready...';
+      until nc -z postgres 5432; do
+        sleep 1;
+      done;
+      
+      echo 'Starting Airflow webserver...';
+      exec airflow webserver
+      "
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-scheduler:
+    <<: *airflow-common
+    entrypoint: ['/bin/bash', '-c']
+    command: >
+      "
+      echo 'Waiting for database to be ready...';
+      until nc -z postgres 5432; do
+        sleep 1;
+      done;
+      
+      echo 'Starting Airflow scheduler...';
+      exec airflow scheduler
+      "
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-init:
+    <<: *airflow-common
+    entrypoint: ['/bin/bash', '-c']
+    command: >
+      "
+      echo 'Waiting for database to be ready...';
+      until nc -z postgres 5432; do
+        sleep 1;
+      done;
+      
+      echo 'Initializing Airflow database...';
+      airflow db init;
+      
+      echo 'Creating admin user...';
+      airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com || echo 'Admin user already exists or error occurred';
+        
+      echo 'Initialization complete.';
+      "
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+    driver: local

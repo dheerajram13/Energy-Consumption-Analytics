@@ -20,12 +20,13 @@ python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 
 # Machine Learning
-darts[torch]>=0.25.0,<0.26.0
-scikit-learn>=1.0.1,<2.0.0
-cmdstanpy>=1.0.4,<2.0.0
-pmdarima==1.8.5
-prophet>=1.1.0
-statsmodels>=0.13.0,<0.14.0
+# Using specific versions to avoid conflicts
+darts[torch]==0.25.0
+scikit-learn==1.0.2
+cmdstanpy==1.0.4
+pmdarima==2.0.4  # Updated to a newer version that works with statsmodels>=0.14.0
+prophet==1.1.5
+statsmodels==0.14.1  # Updated to a version compatible with darts
 
 # Workflow
 apache-airflow==2.2.0
