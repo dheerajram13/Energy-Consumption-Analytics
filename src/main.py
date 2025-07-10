@@ -22,6 +22,7 @@ from .auth.auth_utils import (
 # Import routers
 from .api.routes import auth as auth_routes
 from .api.routes import ml as ml_routes
+from .api.routes import powerbi as powerbi_routes
 
 # Pydantic models for request/response
 class EnergyConsumptionCreate(BaseModel):
@@ -58,8 +59,9 @@ app = FastAPI(
 )
 
 # Include routers
-app.include_router(auth_routes.router, prefix="/api")
-app.include_router(ml_routes.router, prefix="/api")
+app.include_router(auth_routes.router, prefix="/api/auth", tags=["auth"])
+app.include_router(ml_routes.router, prefix="/api/ml", tags=["ml"])
+app.include_router(powerbi_routes.router, prefix="/api", tags=["powerbi"])
 
 # CORS middleware
 app.add_middleware(
