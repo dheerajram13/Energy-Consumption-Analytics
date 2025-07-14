@@ -26,7 +26,7 @@ scikit-learn==1.0.2
 cmdstanpy==1.0.4
 pmdarima==2.0.4  # Updated to a newer version that works with statsmodels>=0.14.0
 prophet==1.1.5
-statsmodels==0.14.1  # Updated to a version compatible with darts
+statsmodels==0.14.5  # Updated to a version compatible with darts
 
 # Workflow
 apache-airflow==2.2.0
