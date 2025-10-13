@@ -1,5 +1,5 @@
 # Build stage
-FROM python:3.9-slim as builder
+FROM python:3.9.24-slim as builder
 
 # Set environment variables
 ENV PYTHONDONDONTWRITEBYTECODE 1
@@ -19,7 +19,7 @@ COPY requirements.txt .
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt
 
 # Runtime stage
-FROM python:3.9-slim
+FROM python:3.9.24-slim
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
